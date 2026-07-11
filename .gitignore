@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+workspace/runs/*
+!workspace/runs/.gitkeep
+.claude/agent-memory-local/
+.claude/settings.local.json
