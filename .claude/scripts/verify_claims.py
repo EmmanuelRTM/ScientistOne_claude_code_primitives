@@ -91,10 +91,12 @@ def main() -> int:
     bib = load_bibliography(run_dir)
     claims = [json.loads(l) for l in claims_file.read_text().splitlines() if l.strip()]
     for claim in claims:
-        # don't downgrade a definitive verdict the LLM already recorded
-        if claim["status"] in ("PASS", "FAIL", "PARTIAL") and claim.get("detail", "").startswith("LLM:"):
-            continue
+        old_status, old_detail = claim["status"], claim.get("detail", "")
         verify_claim(run_dir, bib, claim)
+        # deterministic re-verification never downgrades a definitive verdict
+        # back to PENDING_LLM — only a deterministic FAIL overrides it
+        if claim["status"] == "PENDING_LLM" and old_status in ("PASS", "FAIL", "PARTIAL"):
+            claim["status"], claim["detail"] = old_status, old_detail
     claims_file.write_text("".join(json.dumps(c) + "\n" for c in claims))
 
     counts = {}
