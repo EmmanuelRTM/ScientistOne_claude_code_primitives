@@ -41,6 +41,7 @@ holds the current run id. Layout:
 | `paper/critic-report.md` | paper-critic |
 | `paper/draft.md` | paper-writer (resolve-compose) |
 | `paper/claims.jsonl` | extract_claims.py / verify_claims.py / claim-verifier |
+| `paper/votes/` (best-of-N verdict votes) | verdict_votes.py |
 | `paper/verification-report.md` | claim-verifier |
 | `final/paper.md` | refiner / main agent |
 
@@ -113,6 +114,12 @@ cannot be tagged go in an explicit `## Assumptions` section.
 5. **Unsupported claims get dropped or softened, not defended.**
 6. **Verification and repair are separate.** The claim-verifier never edits
    the draft; the refiner never issues verdicts.
+7. **A judgment without a quote does not count.** Every LLM PASS/PARTIAL
+   verdict on a citation or methodological claim carries a `quote` that
+   appears verbatim in the evidence source; `verify_claims.py` discards
+   ungrounded verdicts (QUOTE-CHECK → FAIL). When `verifier_votes` ≥ 2,
+   LLM verdicts are sampled in independent contexts and disagreements
+   resolve to the weakest verdict.
 
 ## Agent roster
 

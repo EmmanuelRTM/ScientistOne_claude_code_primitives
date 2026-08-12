@@ -101,7 +101,13 @@ Deterministic scripts enforce the chain (`.claude/scripts/`):
 - `ground_check.py` — the GROUND stage: opens every tagged artifact and
   verifies the sentence against it (grounding ratio must reach 0.85).
 - `verify_claims.py` — numerical claims within ±5% of their artifact,
-  citation/artifact existence.
+  citation/artifact existence, and quote-grounding: an LLM PASS/PARTIAL
+  verdict must carry a verbatim excerpt of its evidence source, or the
+  verdict is discarded (QUOTE-CHECK → FAIL).
+- `verdict_votes.py` — optional best-of-N verification
+  (`/research ... --votes N`): the LLM-only judgments (citation entailment,
+  method-code alignment) are sampled N times in fresh contexts and
+  disagreements resolve to the weakest verdict.
 - `chain_of_evidence.py` — the paper's four integrity checks: Score
   Verification, Reference Verification, Specification Violation,
   Method-Code Alignment.
@@ -112,6 +118,12 @@ Deterministic scripts enforce the chain (`.claude/scripts/`):
 Scores are never estimated: the only official metric is the one produced by
 executing `workspace/tasks/<task>/evaluate.py`, and a separate auditor agent
 disqualifies branches that game it.
+
+The full mapping of these mechanisms onto Anthropic's
+[reduce-hallucinations](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations)
+and
+[increase-consistency](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/increase-consistency)
+guidance is documented in [docs/guardrails.md](docs/guardrails.md).
 
 ## Adding your own task
 

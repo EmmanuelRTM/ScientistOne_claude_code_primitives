@@ -31,6 +31,8 @@ def main() -> int:
     p.add_argument("--branches", type=int, default=5)
     p.add_argument("--iterations", type=int, default=2)
     p.add_argument("--offline", action="store_true")
+    p.add_argument("--votes", type=int, default=1,
+                   help="best-of-N samples for LLM-only claim verdicts")
     p.add_argument("--slug", default=None)
     args = p.parse_args()
 
@@ -62,6 +64,7 @@ def main() -> int:
         "branches": args.branches,
         "iterations": args.iterations,
         "offline": args.offline,
+        "verifier_votes": max(1, args.votes),
         "created_at": now.isoformat(timespec="seconds"),
     }
     (run / "run-config.json").write_text(json.dumps(config, indent=2) + "\n")

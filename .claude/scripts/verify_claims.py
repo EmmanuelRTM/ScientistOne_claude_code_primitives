@@ -9,6 +9,12 @@
                     left to the claim-verifier agent (status PENDING_LLM)
   untagged       -> FAIL (no declared evidence source)
 
+LLM verdicts are quote-grounded: a PASS/PARTIAL judgment on a citation or
+methodological claim must carry a "quote" field that is a verbatim excerpt of
+the claim's evidence source (literature note / solution.py / solve.log). A
+verdict whose quote is missing or not found verbatim is downgraded to FAIL
+with a QUOTE-CHECK detail — an ungrounded judgment does not count.
+
 Rewrites claims.jsonl in place with updated status/detail.
 Usage: python3 .claude/scripts/verify_claims.py <run-dir-or-run-id>
 """
@@ -18,8 +24,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evtags import (check_log_ref, load_bibliography, numbers_in,
-                    numbers_match, resolve_json_pointer)
+from evtags import (check_log_ref, check_quote, load_bibliography, needs_quote,
+                    numbers_in, numbers_match, resolve_json_pointer)
 
 ROOT = Path(__file__).resolve().parents[2]
 NUM_TOL = 0.05  # +-5% per the Chain-of-Evidence protocol
@@ -97,6 +103,13 @@ def main() -> int:
         # back to PENDING_LLM — only a deterministic FAIL overrides it
         if claim["status"] == "PENDING_LLM" and old_status in ("PASS", "FAIL", "PARTIAL"):
             claim["status"], claim["detail"] = old_status, old_detail
+        # an LLM PASS/PARTIAL only counts if its quote is a verbatim excerpt
+        # of the evidence source — the verifier must re-judge or FAIL honestly
+        if needs_quote(claim):
+            ok, qdetail = check_quote(run_dir, claim)
+            if not ok:
+                claim["status"] = "FAIL"
+                claim["detail"] = f"QUOTE-CHECK: {qdetail}; discarded verdict: {claim['detail']}"
     claims_file.write_text("".join(json.dumps(c) + "\n" for c in claims))
 
     counts = {}

@@ -4,7 +4,7 @@ description: >
   literature, discover a solution via parallel explore-exploit branches,
   write an evidence-tagged paper, and verify every claim. The ScientistOne
   pipeline as one command.
-argument-hint: "\"<topic>\" [--task digits] [--branches 5] [--iterations 2] [--offline]"
+argument-hint: "\"<topic>\" [--task digits] [--branches 5] [--iterations 2] [--offline] [--votes 1]"
 disable-model-invocation: true
 ---
 
@@ -80,7 +80,10 @@ Ledger event `stage_write_paper`.
 
 1. `python3 .claude/scripts/extract_claims.py RUN`
 2. Launch `claim-verifier` → verdicts in `paper/claims.jsonl` +
-   `paper/verification-report.md`.
+   `paper/verification-report.md`. If `run-config.json#verifier_votes` is
+   N ≥ 2, follow the best-of-N vote protocol in the `verify-claims` skill
+   instead of a single launch (sequential verifier launches interleaved with
+   `verdict_votes.py snapshot`, then `verdict_votes.py merge`).
 3. If any claim is FAIL: launch `refiner`; then re-run
    `python3 .claude/scripts/verify_claims.py RUN`; if FAILs remain, one more
    refiner round (max 2), then accept honestly reported residuals.

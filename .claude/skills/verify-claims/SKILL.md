@@ -21,9 +21,23 @@ exist — otherwise stop and point to `/write-paper`.
    `paper/claims.jsonl`.
 2. **Verify**: launch the `claim-verifier` subagent (run dir). It runs
    `verify_claims.py`, judges the PENDING_LLM claims (citation entailment vs
-   `literature/` notes; method-code alignment vs `best/solution.py`), and
-   writes `paper/verification-report.md`. A stop-gate hook prevents it from
-   finishing with unresolved claims.
+   `literature/` notes; method-code alignment vs `best/solution.py`) with a
+   verbatim supporting quote per PASS/PARTIAL, and writes
+   `paper/verification-report.md`. A stop-gate hook prevents it from
+   finishing with unresolved or quote-ungrounded claims.
+
+   **Best-of-N votes** (if `run-config.json#verifier_votes` is N ≥ 2): the
+   LLM judgments are sampled N times and disagreements resolved
+   conservatively. SEQUENTIALLY, for k = 1..N-1: launch a `claim-verifier`,
+   then `python3 .claude/scripts/verdict_votes.py snapshot <run> <k>` (this
+   archives vote k under `paper/votes/` and resets the LLM-judged claims so
+   the next verifier judges blind — votes must NOT run in parallel, they
+   share `paper/claims.jsonl`). Launch the final claim-verifier, then
+   `python3 .claude/scripts/verdict_votes.py merge <run>` — on any
+   disagreement the weakest verdict wins (FAIL < PARTIAL < PASS). Append the
+   merge summary to `paper/verification-report.md` under a
+   `## Vote reconciliation` header, and re-run
+   `python3 .claude/scripts/verify_claims.py <run>` for the post-merge tally.
 3. **Refine loop** (max 2 rounds): if any claim is FAIL, launch `refiner`
    (run dir + the failure list), then re-run
    `python3 .claude/scripts/verify_claims.py <run>`. Remaining FAILs after
