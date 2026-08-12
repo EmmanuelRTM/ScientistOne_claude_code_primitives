@@ -46,6 +46,45 @@ holds the current run id. Layout:
 
 All paths inside artifacts are run-directory-relative.
 
+## Autopilot (optional) — the pipeline as an enforced loop
+
+`.claude/hooks/run_stop_gate.py` can hold the main session on the pipeline
+instead of relying on the orchestrator to remember all five stages across
+compaction. It is **inert unless armed**, and armed per run:
+
+```
+python3 .claude/scripts/autopilot.py arm [--max N]   # default 12 continuations
+python3 .claude/scripts/autopilot.py status
+python3 .claude/scripts/autopilot.py disarm
+```
+
+Arming writes `workspace/runs/<id>/AUTOPILOT`. The first session to finish a
+turn claims the run; other sessions in this repo are unaffected. On each stop
+the gate reads the artifact ladder (`final/paper.md` → `paper/draft.md` →
+`best/SELECTED.json` → `brief.md`), and while a stage is outstanding it exits
+2 with the next stage as the instruction. It disarms itself on completion or
+when the continuation budget is spent, and reports either through a user-
+visible message.
+
+The same hook runs on `PreToolUse` and denies `AskUserQuestion` while the loop
+is being driven by the owning session: nobody is watching, so a question would
+stall the run indefinitely rather than end the turn and let the stop gate push
+it forward. It is inert for every other tool, for unarmed runs, and for a run
+this session does not own. Every fire is logged to `ledger.jsonl` as
+`autopilot_continue` / `autopilot_budget_exhausted` / `autopilot_complete` /
+`autopilot_blocked_question`.
+
+The budget lives in the `AUTOPILOT` file rather than in session state, so it
+survives `--resume` and cannot be silently rearmed. Kill switches:
+`python3 .claude/scripts/autopilot.py disarm`, deleting the `AUTOPILOT` file,
+or `RESEARCH_AUTOPILOT_OFF=1`.
+
+Note for the continued agent: stage skills set `disable-model-invocation:
+true`, so `/discover` and friends are not yours to invoke. Read
+`.claude/skills/<stage>/SKILL.md` and carry the stage out directly. If a
+stage's required input artifact is missing, disarm and report — never
+fabricate a stand-in.
+
 ## Evidence tags (Chain-of-Evidence)
 
 Every factual claim in paper artifacts carries an inline tag binding it to an

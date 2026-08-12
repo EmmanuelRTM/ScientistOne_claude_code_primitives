@@ -7,6 +7,7 @@ description: >
   edits the draft.
 tools: Read, Bash, Grep, Glob, Write
 disallowedTools: Edit
+maxTurns: 30
 effort: high
 color: pink
 hooks:

@@ -52,8 +52,20 @@ def main() -> int:
         score_tag_sentences = [l for l in text.splitlines()
                                if any(t == "score" for t, _ in find_tags(l))]
         nums = [n for l in score_tag_sentences for n in numbers_in(l)]
+        # any sentence citing the headline artifact must not contradict it
+        headline_tag = "best/eval.json#score"
+        contradictions = []
+        for line in text.splitlines():
+            if any(t == "score" and r == headline_tag for t, r in find_tags(line)):
+                line_nums = numbers_in(line)
+                if line_nums and not any(numbers_match(n, score, 0.005) for n in line_nums):
+                    contradictions.append(line_nums)
         if score is None:
             results.append(("Score Verification", "FAIL", "best/eval.json has no score"))
+        elif contradictions:
+            results.append(("Score Verification", "FAIL",
+                            f"sentence(s) tagged {headline_tag} state {contradictions[:3]} "
+                            f"but the artifact says {score}"))
         elif nums and any(numbers_match(n, score, 0.005) for n in nums):
             results.append(("Score Verification", "PASS",
                             f"headline score {score} restated in paper"))
@@ -146,4 +158,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except BrokenPipeError:  # output piped to head etc. — not an error
+        sys.exit(0)
