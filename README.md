@@ -75,7 +75,9 @@ python3 .claude/scripts/autopilot.py disarm
 A `Stop` hook then checks the artifact ladder every time the session tries to
 finish, and while a stage is outstanding it blocks the stop and hands the next
 stage back as the instruction. It disarms itself on completion or when the
-continuation budget is spent.
+continuation budget is spent. While the loop is running it also declines
+`AskUserQuestion` — nobody is watching, so a question would stall the run
+rather than advance it.
 
 The hook is **inert unless armed**, and armed per run: the first session to
 finish a turn claims it, so other sessions in the repo are never held. The
