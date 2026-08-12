@@ -38,6 +38,15 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/citation_guard.py"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/run_stop_gate.py"
+          }
+        ]
       }
     ],
     "Stop": [

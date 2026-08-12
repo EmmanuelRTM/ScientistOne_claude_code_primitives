@@ -10,7 +10,8 @@ ICML 2026) where Claude Code itself is the runtime:
   ideator, parallel solvers, evaluator, auditor, writers, verifiers.
 - **Skills / slash commands** (`.claude/skills/`) are the pipeline stages.
 - **Hooks** (`.claude/settings.json` + `.claude/hooks/`) are deterministic
-  integrity guards (e.g. hallucinated citations are blocked at write time).
+  integrity guards — hallucinated citations are blocked at write time, and
+  stop gates hold an agent on the job until its stage is genuinely finished.
 - **Memory** (`CLAUDE.md`, `.claude/rules/`, per-agent project memory) is the
   shared constitution and cross-run learning.
 - **The filesystem** (`workspace/runs/<run-id>/`) is the message bus between
@@ -58,6 +59,32 @@ from `workspace/seeds/` — three example seed notes ship with the repo).
 
 Every stage persists its artifacts, so any stage can be re-run independently
 against the active run (`workspace/runs/ACTIVE_RUN`).
+
+### Autopilot (optional)
+
+By default the orchestrator has to remember to carry a run through all five
+stages, which is fragile across a long run with context compaction. Arming
+the autopilot makes that a loop the runtime enforces:
+
+```bash
+python3 .claude/scripts/autopilot.py arm [--max N]   # default 12 continuations
+python3 .claude/scripts/autopilot.py status
+python3 .claude/scripts/autopilot.py disarm
+```
+
+A `Stop` hook then checks the artifact ladder every time the session tries to
+finish, and while a stage is outstanding it blocks the stop and hands the next
+stage back as the instruction. It disarms itself on completion or when the
+continuation budget is spent. While the loop is running it also declines
+`AskUserQuestion` — nobody is watching, so a question would stall the run
+rather than advance it.
+
+The hook is **inert unless armed**, and armed per run: the first session to
+finish a turn claims it, so other sessions in the repo are never held. The
+budget lives in `workspace/runs/<id>/AUTOPILOT` rather than in session state,
+so it survives `--resume` and cannot be silently rearmed. To stop a loop:
+`autopilot.py disarm`, delete the `AUTOPILOT` file, or set
+`RESEARCH_AUTOPILOT_OFF=1`.
 
 ## Chain-of-Evidence
 
@@ -123,8 +150,10 @@ CLAUDE.md                  # pipeline constitution (loaded by every agent)
 .claude/agents/            # 9 researcher subagents
 .claude/skills/            # 7 stage commands + 4 internal protocol skills
 .claude/rules/             # path-scoped rules (evidence tags, bibliography, branches)
-.claude/hooks/             # 5 deterministic guards (citation, branch, ledger, stop-gate)
+.claude/hooks/             # 6 deterministic guards (citation, branch, ledger,
+                           #   session brief, verifier stop-gate, pipeline autopilot)
 .claude/scripts/           # stdlib-only pipeline scripts (GROUND, claims, CoE audit)
+research/                  # design notes on the loop primitives behind the pipeline
 workspace/tasks/digits/    # bundled offline demo task
 workspace/seeds/           # seed literature for offline runs
 workspace/runs/            # run artifacts (gitignored)

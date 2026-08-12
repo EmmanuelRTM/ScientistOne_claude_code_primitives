@@ -625,10 +625,15 @@ exit-code-2 table]`.
 | `autoCompactWindow` | settings | 100k–1M tokens before compacting |
 
 This repo already differentiates: `effort: high` for ideator, solver, auditor,
-paper-writer; `effort: medium` for evaluator and refiner; `maxTurns: 40` on solver
-alone — the only agent that iterates `[observed: .claude/agents/*.md]`. No agent
-sets `model`, so all inherit `[observed: same]`. That's the pattern: cap the one
-that loops, downgrade effort on transcription-shaped work.
+paper-writer; `effort: medium` for evaluator and refiner `[observed:
+.claude/agents/*.md]`. At the time of this survey `maxTurns: 40` on solver was
+the only turn cap in the roster; acting on this section since added `maxTurns: 30`
+to claim-verifier and `25` to refiner — the other two agents whose instructions
+tell them to iterate `[observed: same files, after the autopilot work]`. The
+remaining six stay uncapped: they are single-pass, and a cap that fires mid-stage
+truncates an artifact, which is worse than the tokens it saves `[inferred]`. No
+agent sets `model`, so all inherit `[observed: same]`. The pattern: cap what
+loops, downgrade effort on transcription-shaped work.
 
 **Deny beats allow for blast radius.** The project settings here deny
 `Bash(pip install*)`, `Bash(pip3 install*)`, `Bash(rm -rf*)` while allowing only

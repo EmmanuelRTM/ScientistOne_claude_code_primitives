@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-"""Stop gate for the MAIN session (pipeline autopilot).
+"""Pipeline autopilot enforcement. Two events, one mechanism.
 
-While a run is armed and still has an unfinished stage, block the session's
-stop and feed the next stage back as the instruction. This turns /research
-from a prose checklist the main agent has to remember into an enforced loop
-that survives compaction.
+`Stop`        — while an armed run still has an unfinished stage, block the
+                stop and feed the next stage back as the instruction. This
+                turns /research from a prose checklist the main agent has to
+                remember into a loop the runtime enforces across compaction.
+`PreToolUse`  — while an armed run is being driven by THIS session, deny
+                AskUserQuestion. Nobody is watching an unattended loop, so a
+                question would stall it indefinitely rather than end the turn
+                and let the Stop gate push it forward.
+
+Both share the same arming check, which is why they live in one file.
 
 Opt-in twice over, so it can never surprise an unrelated session:
   1. the run must be armed  -> workspace/runs/<id>/AUTOPILOT exists
   2. the session must own it -> AUTOPILOT.session_id matches this session
-     (the first session to fire the gate after arming claims it)
+     (the first session to fire the Stop gate after arming claims it)
 
 Bounded by a counter in AUTOPILOT, not by stop_hook_active: the counter is a
 file, so it survives --resume and is unaffected by whatever stop_hook_active
@@ -19,7 +25,7 @@ ledger on every fire so its real semantics become checkable after one run.
 Arm/disarm:  python3 .claude/scripts/autopilot.py arm [--max N] | disarm | status
 Kill switch: RESEARCH_AUTOPILOT_OFF=1, or delete the AUTOPILOT file.
 
-Exit 2 blocks the stop and feeds stderr back to Claude. Any error exits 0 —
+Stop exits 2 to block and feeds stderr back to Claude. Any error exits 0 —
 a broken hook must never wedge a session.
 """
 import datetime
@@ -44,6 +50,23 @@ def next_stage(run: Path):
     return ("investigate", "Stage 1 — Problem Investigator")
 
 
+def armed_run(root: Path):
+    """Return (run_dir, state, state_file) for an armed active run, else None."""
+    active = root / "workspace" / "runs" / "ACTIVE_RUN"
+    if not active.is_file():
+        return None
+    run = root / "workspace" / "runs" / active.read_text().strip()
+    if not run.is_dir():
+        return None
+    state_file = run / "AUTOPILOT"
+    if not state_file.is_file():
+        return None
+    try:
+        return run, json.loads(state_file.read_text()), state_file
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def log(run: Path, event: dict) -> None:
     event.setdefault("ts", datetime.datetime.now().isoformat(timespec="seconds"))
     try:
@@ -54,34 +77,41 @@ def log(run: Path, event: dict) -> None:
 
 
 def emit(payload: dict) -> int:
-    """Surface a message to the user while still allowing the stop."""
+    """Print JSON for the runtime and allow the action."""
     print(json.dumps(payload))
     return 0
 
 
-def main() -> int:
-    if os.environ.get("RESEARCH_AUTOPILOT_OFF"):
+def handle_pre_tool_use(hook_input: dict, root: Path) -> int:
+    if hook_input.get("tool_name") != "AskUserQuestion":
         return 0
-    try:
-        hook_input = json.load(sys.stdin)
-    except (json.JSONDecodeError, ValueError):
+    armed = armed_run(root)
+    if armed is None:
         return 0
+    run, state, _ = armed
+    owner = state.get("session_id")
+    # Deny only once the loop is actually being driven by this session. An
+    # unclaimed run means the operator is still at the keyboard.
+    if not owner or owner != hook_input.get("session_id"):
+        return 0
+    log(run, {"event": "autopilot_blocked_question"})
+    return emit({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": (
+            f"Autopilot is driving run {run.name} — no one is watching, so a "
+            f"question cannot be answered and would stall the loop. Decide from "
+            f"the run artifacts and the stage skill. If the stage genuinely "
+            f"cannot proceed, run `python3 .claude/scripts/autopilot.py disarm` "
+            f"and report why instead of fabricating a missing input."),
+    }})
 
-    root = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
-    active = root / "workspace" / "runs" / "ACTIVE_RUN"
-    if not active.is_file():
-        return 0
-    run = root / "workspace" / "runs" / active.read_text().strip()
-    if not run.is_dir():
-        return 0
 
-    state_file = run / "AUTOPILOT"
-    if not state_file.is_file():
-        return 0  # not armed — this is the common case, and the gate is inert
-    try:
-        state = json.loads(state_file.read_text())
-    except (json.JSONDecodeError, OSError):
+def handle_stop(hook_input: dict, root: Path) -> int:
+    armed = armed_run(root)
+    if armed is None:
         return 0
+    run, state, state_file = armed
 
     session_id = hook_input.get("session_id")
     owner = state.get("session_id")
@@ -132,6 +162,20 @@ def main() -> int:
         f"fabricating the missing input.",
         file=sys.stderr)
     return 2
+
+
+def main() -> int:
+    if os.environ.get("RESEARCH_AUTOPILOT_OFF"):
+        return 0
+    try:
+        hook_input = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        return 0
+
+    root = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+    if hook_input.get("hook_event_name") == "PreToolUse":
+        return handle_pre_tool_use(hook_input, root)
+    return handle_stop(hook_input, root)
 
 
 if __name__ == "__main__":

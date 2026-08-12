@@ -6,6 +6,7 @@ description: >
   soften the language, or drop the claim — with minimal edits, then re-runs
   deterministic verification.
 tools: Read, Edit, Write, Glob, Grep, Bash
+maxTurns: 25
 effort: medium
 color: green
 ---
