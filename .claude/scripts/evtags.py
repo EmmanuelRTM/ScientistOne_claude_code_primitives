@@ -116,6 +116,71 @@ def numbers_match(sentence_num: float, artifact_value, rel_tol: float) -> bool:
     return False
 
 
+QUOTE_MIN_LEN = 20  # normalized chars; below this a "quote" grounds nothing
+VERDICT_RANK = {"FAIL": 0, "PARTIAL": 1, "PASS": 2}  # weakest first
+
+
+def normalize_ws(text: str) -> str:
+    return " ".join(text.split())
+
+
+def needs_quote(claim: dict) -> bool:
+    """True if this claim's verdict must be backed by a verbatim quote.
+
+    Applies to LLM-judged PASS/PARTIAL verdicts on citation and
+    methodological claims — the two claim types whose support lives in prose
+    or code rather than in a number a script can compare directly.
+    """
+    return (claim.get("type") in ("citation", "methodological")
+            and claim.get("status") in ("PASS", "PARTIAL")
+            and str(claim.get("detail", "")).startswith("LLM:"))
+
+
+def quote_sources(run_dir: Path, claim: dict):
+    """The evidence files a claim's supporting quote may legally come from."""
+    sources = []
+    for tag in claim.get("evidence_tags", []):
+        parts = tag.split(":", 2)
+        if len(parts) != 3:
+            continue
+        _, tag_type, ref = parts
+        if tag_type == "cite":
+            sources.append(run_dir / "literature" / f"{ref}.md")
+        elif tag_type == "artifact":
+            sources.append(run_dir / ref)
+    if claim.get("type") == "methodological":
+        sources.append(run_dir / "best" / "solution.py")
+        sources.append(run_dir / "best" / "solve.log")
+    seen, out = set(), []
+    for fp in sources:
+        if fp.is_file() and fp not in seen:
+            seen.add(fp)
+            out.append(fp)
+    return out
+
+
+def check_quote(run_dir: Path, claim: dict):
+    """Validate that claim['quote'] is a verbatim excerpt (whitespace-
+    normalized) of one of the claim's evidence sources. Returns (ok, detail).
+    """
+    quote = normalize_ws(str(claim.get("quote") or ""))
+    if not quote:
+        return False, "no quote recorded"
+    if len(quote) < QUOTE_MIN_LEN:
+        return False, f"quote shorter than {QUOTE_MIN_LEN} chars grounds nothing"
+    sources = quote_sources(run_dir, claim)
+    if not sources:
+        return False, "no evidence source file exists to quote from"
+    for fp in sources:
+        try:
+            if quote in normalize_ws(fp.read_text()):
+                return True, f"verbatim in {fp.relative_to(run_dir)}"
+        except (OSError, UnicodeDecodeError, ValueError):
+            continue
+    return False, ("quote is not a verbatim excerpt of any evidence source: "
+                   + ", ".join(str(fp.relative_to(run_dir)) for fp in sources))
+
+
 def check_log_ref(run_dir: Path, ref: str):
     """Validate 'path:L42' or 'path:L42-L57'. Returns (ok, detail)."""
     m = re.match(r"^(.*?):L(\d+)(?:-L?(\d+))?$", ref)

@@ -37,8 +37,22 @@ Your task message names the run directory. Protocol:
      claimed, or abstract-only source) / FAIL (not supported).
    - **Methodological claims**: check against `best/solution.py` and
      `best/solve.log`. Does the code/log actually do what the sentence says?
-4. Re-run `verify_claims.py` — it preserves your `LLM:`-prefixed verdicts and
-   gives the final tally.
+
+   **Quote-ground every PASS/PARTIAL**: first extract the word-for-word
+   passage that supports the claim, then judge. Record it in a `"quote"`
+   field — a verbatim excerpt (≥20 chars) of the evidence source you judged
+   against (the literature note, `solution.py`, or `solve.log`).
+   `verify_claims.py` checks the quote is really in the file and discards any
+   verdict whose quote is missing or fabricated (QUOTE-CHECK → FAIL). No
+   supporting passage to quote? Then the honest verdict is FAIL — never
+   paraphrase into the quote field. FAIL verdicts need no quote. Example:
+
+   ```json
+   {"id": "C007", "type": "citation", "status": "PASS", "detail": "LLM: note states the 2x Bayes-error bound the sentence claims", "quote": "the nearest neighbor risk is bounded above by twice the Bayes risk", ...}
+   ```
+4. Re-run `verify_claims.py` — it preserves your `LLM:`-prefixed verdicts,
+   validates every quote, and gives the final tally. If it discards a verdict
+   (QUOTE-CHECK), re-judge that claim with a genuine quote or FAIL it.
 5. Write `paper/verification-report.md`:
    - Per-claim table: id · type · verdict · evidence source · one-line reason.
    - A `## Chain-of-Evidence summary` with explicit lines:

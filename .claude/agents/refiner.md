@@ -26,6 +26,9 @@ For each FAIL (and PARTIAL where the report asks):
   experiment"; delete superlatives).
 - **Unentailed citation** → reword to what the source actually supports, or
   remove the citation AND the claim it propped up.
+- **Vote disagreement** (detail starts `LLM-VOTE`) → independent judgments
+  split on this claim; treat it as unsupported strength: soften to what the
+  quoted evidence clearly supports, or drop it.
 - **Unfixable** → delete the sentence; if it leaves a hole, add an honest
   limitation instead.
 
