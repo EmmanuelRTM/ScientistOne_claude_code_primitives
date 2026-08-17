@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-"""Regression suite for the integrity hooks. Run: python3 .claude/scripts/selftest_hooks.py
+"""Regression suite for the integrity hooks and the skill/agent wiring.
+Run: python3 .claude/scripts/selftest_hooks.py
 
-Every case feeds a real PreToolUse payload to a real hook on a throwaway
-fixture run and asserts the exit code (2 = blocked, 0 = allowed). The point is
+Hook cases feed a real PreToolUse payload to a real hook on a throwaway
+fixture run and assert the exit code (2 = blocked, 0 = allowed). The point is
 the *allowed* half as much as the blocked half: a guard that blocks a solver's
 `python3 solution.py >> solve.log` is worse than no guard at all.
+
+Wiring cases check every `skills:` entry in .claude/agents/*.md against
+.claude/skills/. Claude Code SKIPS a missing or disabled preload with only a
+debug-log warning (docs: sub-agents.md#preload-skills-into-subagents), so a
+typo'd name or a later-added `disable-model-invocation: true` silently strips
+an agent of the protocol it is judged against. This makes that loud.
 
 Exits 0 if every case matches, 1 otherwise (naming the failures).
 """
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -97,6 +105,51 @@ def cases(base: Path):
     ]
 
 
+def frontmatter(path: Path) -> str:
+    text = path.read_text()
+    if not text.startswith("---\n"):
+        return ""
+    return text.split("---\n", 2)[1]
+
+
+def preloaded_skills(agent_md: Path) -> list[str]:
+    """The `skills:` list from agent frontmatter, parsed with stdlib only."""
+    names, in_skills = [], False
+    for line in frontmatter(agent_md).splitlines():
+        if re.match(r"^skills:\s*$", line):
+            in_skills = True
+            continue
+        if in_skills:
+            m = re.match(r"^\s+-\s+(\S+)\s*$", line)
+            if m:
+                names.append(m.group(1))
+                continue
+            in_skills = False
+    return names
+
+
+def wiring_failures() -> list[str]:
+    """Every skills: entry must exist and be preloadable (docs: a missing or
+    disable-model-invocation skill is skipped with only a debug warning)."""
+    problems = []
+    skills_dir = ROOT / ".claude" / "skills"
+    for agent_md in sorted((ROOT / ".claude" / "agents").glob("*.md")):
+        for name in preloaded_skills(agent_md):
+            skill_md = skills_dir / name / "SKILL.md"
+            if not skill_md.is_file():
+                problems.append(
+                    f"  {agent_md.name}: preloads '{name}' but "
+                    f".claude/skills/{name}/SKILL.md does not exist "
+                    f"(Claude Code would skip it silently)")
+            elif re.search(r"^disable-model-invocation:\s*true",
+                           frontmatter(skill_md), re.M):
+                problems.append(
+                    f"  {agent_md.name}: preloads '{name}' but that skill sets "
+                    f"disable-model-invocation: true, which blocks preloading "
+                    f"(Claude Code would skip it silently)")
+    return problems
+
+
 def main() -> int:
     failures = []
     total = 0
@@ -108,11 +161,20 @@ def main() -> int:
             got = run_hook(hook, payload, base)
             if got != want:
                 failures.append(f"  {hook}: {label}\n      expected exit {want}, got {got}")
-    if failures:
-        print(f"FAIL — {len(failures)}/{total} hook cases wrong:")
-        print("\n".join(failures))
+    n_hook_failures = len(failures)
+    wiring = wiring_failures()
+    n_preloads = sum(len(preloaded_skills(p))
+                     for p in (ROOT / ".claude" / "agents").glob("*.md"))
+    if failures or wiring:
+        if failures:
+            print(f"FAIL — {n_hook_failures}/{total} hook cases wrong:")
+            print("\n".join(failures))
+        if wiring:
+            print(f"FAIL — {len(wiring)} broken skill preload(s):")
+            print("\n".join(wiring))
         return 1
-    print(f"OK — {total}/{total} hook cases behave as specified")
+    print(f"OK — {total}/{total} hook cases behave as specified; "
+          f"{n_preloads}/{n_preloads} skill preloads resolve")
     return 0
 
 

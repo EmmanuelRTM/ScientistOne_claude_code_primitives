@@ -142,6 +142,12 @@ would block preloading):
 | `evidence-tagging` | paper-writer, paper-critic, claim-verifier, refiner | — |
 | `distill-feedback` | — (main agent only) | invoked at step 6 of each iteration |
 
+Preloading is delivery, not access control: any subagent can still invoke any
+non-`disable-model-invocation` skill through the Skill tool mid-run. And a
+`skills:` entry that is missing or disabled is skipped with only a debug-log
+warning — `selftest_hooks.py` checks every preload resolves, so a typo fails
+loudly here instead of silently stripping an agent of its protocol.
+
 **Hook coverage** — three hooks are session-level (`settings.json`) and two are
 agent-scoped (agent frontmatter). Nothing is orphaned; the agent-scoped pair is
 deliberately narrow:
