@@ -12,7 +12,7 @@ skills:
 color: orange
 hooks:
   PreToolUse:
-    - matcher: "Write|Edit"
+    - matcher: "Write|Edit|Bash"
       hooks:
         - type: command
           command: python3 "$CLAUDE_PROJECT_DIR"/.claude/hooks/paper_area_guard.py

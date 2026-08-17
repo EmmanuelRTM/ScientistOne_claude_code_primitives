@@ -98,7 +98,9 @@ artifact:
 - `[EV:config:run-config.json#branches]` — run configuration value
 
 A citation key must exist in `bibliography.jsonl` BEFORE it is used — a
-PreToolUse hook blocks writes of unknown keys to paper files. Statements that
+PreToolUse hook blocks writes of unknown keys to paper files, whether the
+write arrives as Write, Edit, or a shell command (redirect, `tee`, `sed -i`,
+interpreter one-liner). Reading is never blocked. Statements that
 cannot be tagged go in an explicit `## Assumptions` section.
 
 ## Hard rules

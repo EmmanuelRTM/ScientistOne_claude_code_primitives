@@ -7,6 +7,7 @@ description: >
   proposals for the parallel branches.
 tools: Read, Write, Glob, Grep
 memory: project
+maxTurns: 30
 effort: high
 skills:
   - evaluation-protocol

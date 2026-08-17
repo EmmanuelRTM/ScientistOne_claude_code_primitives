@@ -7,13 +7,14 @@ description: >
   score.
 tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit
+maxTurns: 30
 effort: high
 skills:
   - evaluation-protocol
 color: red
 hooks:
   PreToolUse:
-    - matcher: "Write"
+    - matcher: "Write|Bash"
       hooks:
         - type: command
           command: python3 "$CLAUDE_PROJECT_DIR"/.claude/hooks/paper_area_guard.py

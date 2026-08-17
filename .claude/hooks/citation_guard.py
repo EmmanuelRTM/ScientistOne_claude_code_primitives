@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""PreToolUse guard (Write|Edit): make hallucinated references mechanically
-impossible.
+"""PreToolUse guard (Write|Edit|Bash): make hallucinated references
+mechanically impossible.
 
 If the target file lives under workspace/runs/<id>/paper/ or /final/, every
 [EV:cite:KEY] (or pandoc-style [@KEY]) in the content being written must exist
 in that run's bibliography.jsonl. Unknown key -> exit 2 (block) with the
 reason on stderr, which Claude receives as feedback.
+
+Bash is matched too: a shell command that writes into a paper area (redirect,
+tee, sed -i, cp/mv, interpreter one-liner) is checked the same way, so the
+guard cannot be stepped around with `cat > draft.md <<EOF`. Commands that only
+READ paper files are untouched — grepping for a bogus key to find it is not
+the same as writing one.
 
 Fails open (exit 0) on unexpected input — the guard must never break normal
 editing outside paper areas.
@@ -14,6 +20,9 @@ import json
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from shellwrite import write_targets, writes_content  # noqa: E402
 
 EV_CITE_RE = re.compile(r"\[EV:cite:([^\]]+)\]")
 PANDOC_CITE_RE = re.compile(r"\[@([A-Za-z0-9_:.\-]+)\]")
@@ -26,13 +35,23 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
     tool_input = payload.get("tool_input", {})
-    file_path = tool_input.get("file_path", "") or ""
-    m = PAPER_PATH_RE.match(file_path.replace("\\", "/"))
+
+    if payload.get("tool_name") == "Bash" or "command" in tool_input:
+        command = tool_input.get("command", "") or ""
+        m = None
+        for target in write_targets(command):
+            m = PAPER_PATH_RE.match(target.replace("\\", "/"))
+            if m:
+                break
+        content = writes_content(command)
+    else:
+        file_path = tool_input.get("file_path", "") or ""
+        m = PAPER_PATH_RE.match(file_path.replace("\\", "/"))
+        content = tool_input.get("content") or tool_input.get("new_string") or ""
     if not m:
         return 0
     run_dir = Path(m.group(1))
 
-    content = tool_input.get("content") or tool_input.get("new_string") or ""
     keys = set(EV_CITE_RE.findall(content)) | set(PANDOC_CITE_RE.findall(content))
     if not keys:
         return 0
