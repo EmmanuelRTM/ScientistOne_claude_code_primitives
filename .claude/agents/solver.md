@@ -23,7 +23,9 @@ concurrently on competing proposals; may the best real number win.
 
 Your task message names the run directory, your branch directory
 (`iterations/iN/branches/bK/` — you own it exclusively), and your proposal
-file. Read the proposal, `task/task.md`, and `brief.md` for context.
+file. Read the proposal, `task/task.md`, and `brief.md` for context. The
+evaluation-protocol skill (preloaded) is the contract you will be scored and
+audited against — build to it, not around it.
 
 Work protocol:
 1. Write `plan.md` in your branch dir: how you'll implement the proposal, what

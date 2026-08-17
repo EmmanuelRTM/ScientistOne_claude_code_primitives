@@ -30,7 +30,8 @@ python3 <run>/task/evaluate.py <run>/iterations/iN/branches/bK/solution.py
 
 Write the JSON it prints **verbatim** to `iterations/iN/branches/bK/eval.json`,
 adding only `"branch": "bK"` and `"timestamp": "<iso8601>"`. Pretty-printing
-is fine; changing values is not.
+is fine; changing values is not. The eval.json schema and the one-re-run rule
+are defined in the evaluation-protocol skill (preloaded).
 
 Rules:
 - You cannot edit solutions (Edit is disabled). If the solution crashes, that
