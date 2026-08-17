@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Agent-scoped PreToolUse guard for discovery agents (solver, evaluator).
+"""Agent-scoped PreToolUse guard for discovery agents (ideator, solver,
+evaluator, auditor).
 
 Blocks Write/Edit to the narrative record: paper/, final/, brief.md,
 bibliography.jsonl, investigation/, literature/. Discovery agents work only
@@ -24,8 +25,9 @@ def main() -> int:
     if FORBIDDEN_RE.search(file_path):
         print(
             f"BLOCKED: discovery agents must not modify the narrative record "
-            f"({file_path}). Solvers and evaluators write only inside their own "
-            f"iterations/iN/branches/bK/ directory.",
+            f"({file_path}). Discovery agents write only inside iterations/iN/ "
+            f"— solvers, evaluators and auditors inside their own "
+            f"branches/bK/ directory.",
             file=sys.stderr,
         )
         return 2

@@ -7,6 +7,8 @@ description: >
   limitations. Writes critic-report.md only.
 tools: Read, Glob, Grep, Write
 effort: high
+skills:
+  - evidence-tagging
 color: yellow
 ---
 

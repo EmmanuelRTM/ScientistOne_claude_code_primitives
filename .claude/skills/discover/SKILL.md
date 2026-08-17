@@ -33,8 +33,9 @@ For each iteration iN:
 5. Rank + Select (you): read all eval.json + audit.md; audit-FAIL branches
    are disqualified regardless of score; write `iterations/iN/ranking.md`
    (table + rationale).
-6. Distilled feedback (you): follow the `distill-feedback` skill template →
-   `iterations/iN/distilled-feedback.md`.
+6. Distilled feedback (you): invoke the `distill-feedback` skill (Skill tool,
+   `skill: distill-feedback`) and write `iterations/iN/distilled-feedback.md`
+   with exactly its section template — never improvise the format.
 7. Ledger: `python3 .claude/scripts/ledger.py append '{"event":"stage_iteration_iN","detail":"best=<branch>:<score>"}'`
 
 After the final iteration: select the best audit-PASS branch across all
