@@ -173,7 +173,8 @@ Then: `/research "<topic>" --task <name>`.
 CLAUDE.md                  # pipeline constitution (loaded by every agent)
 .claude/agents/            # 9 researcher subagents
 .claude/skills/            # 7 stage commands + 4 internal protocol skills
-.claude/rules/             # path-scoped rules (evidence tags, bibliography, branches)
+.claude/rules/             # workspace protocol (always on) + 3 path-scoped rules
+                           #   (evidence tags, bibliography, branch discipline)
 .claude/hooks/             # 6 deterministic guards (citation, branch, ledger,
                            #   session brief, verifier stop-gate, pipeline autopilot)
 .claude/scripts/           # stdlib-only pipeline scripts (GROUND, claims, CoE audit)

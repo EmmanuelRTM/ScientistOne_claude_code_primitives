@@ -142,6 +142,31 @@ would block preloading):
 | `evidence-tagging` | paper-writer, paper-critic, claim-verifier, refiner | — |
 | `distill-feedback` | — (main agent only) | invoked at step 6 of each iteration |
 
+**Hook coverage** — three hooks are session-level (`settings.json`) and two are
+agent-scoped (agent frontmatter). Nothing is orphaned; the agent-scoped pair is
+deliberately narrow:
+
+| hook | wired in | reaches |
+|---|---|---|
+| `session_start.py` | settings `SessionStart` | main session (subagents get no SessionStart) |
+| `run_stop_gate.py` | settings `Stop` + `PreToolUse:AskUserQuestion` | main session — the autopilot loop |
+| `ledger_log.py` | settings `SubagentStart`/`SubagentStop` | all 9 agents |
+| `citation_guard.py` | settings `PreToolUse:Write\|Edit\|Bash` | every agent that writes |
+| `paper_area_guard.py` | frontmatter | ideator, solver, evaluator, auditor |
+| `verifier_stop_gate.py` | frontmatter `Stop` (registers as SubagentStop) | claim-verifier |
+
+`paper_area_guard` is intentionally NOT on paper-writer, paper-critic,
+claim-verifier, refiner or problem-investigator — writing the narrative record
+is their job.
+
+**Rule coverage** — `.claude/rules/workspace-protocol.md` has no `paths:`, so
+every agent always carries it. The other three activate on touching their
+files: `evidence-tags.md` (`paper/**`, `final/**`), `bibliography.md`
+(`literature/**`, `bibliography.jsonl`), `branch-discipline.md`
+(`branches/**`). They intentionally restate what the protocol skills preload —
+a second delivery path that also reaches the orchestrator, which preloads no
+skills.
+
 **Parallel fan-out**: when a stage calls for B solver (or evaluator, or
 auditor) runs, launch ALL B subagent tasks in a SINGLE message so they run
 concurrently. Never launch branch agents sequentially.
