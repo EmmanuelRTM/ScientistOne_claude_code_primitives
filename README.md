@@ -113,7 +113,19 @@ Deterministic scripts enforce the chain (`.claude/scripts/`):
   Method-Code Alignment.
 - `citation_guard.py` (PreToolUse hook) — writing a citation key that is not
   in `bibliography.jsonl` into a paper file is **blocked at tool level**;
-  references must be retrieved and recorded by the investigator first.
+  references must be retrieved and recorded by the investigator first. Bash is
+  matched alongside Write and Edit, so a shell redirect (`cat > draft.md`,
+  `sed -i`, a `python -c` one-liner) is checked the same way rather than
+  stepping around the guard. Read-only commands are untouched.
+- `paper_area_guard.py` (agent-scoped PreToolUse hook) — discovery agents
+  (ideator, solver, evaluator, auditor) cannot write to `paper/`, `final/`,
+  `brief.md`, `bibliography.jsonl`, `investigation/` or `literature/` by any
+  route, shell included.
+
+Both Bash checks are a speed bump, not a sandbox: they read the command's
+write targets (`.claude/scripts/shellwrite.py`) and will not catch a
+sufficiently indirect payload. `python3 .claude/scripts/selftest_hooks.py`
+runs the guard suite that pins their behavior.
 
 Scores are never estimated: the only official metric is the one produced by
 executing `workspace/tasks/<task>/evaluate.py`, and a separate auditor agent

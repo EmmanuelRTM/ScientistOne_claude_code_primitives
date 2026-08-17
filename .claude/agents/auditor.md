@@ -7,10 +7,17 @@ description: >
   score.
 tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit
+maxTurns: 30
 effort: high
 skills:
   - evaluation-protocol
 color: red
+hooks:
+  PreToolUse:
+    - matcher: "Write|Bash"
+      hooks:
+        - type: command
+          command: python3 "$CLAUDE_PROJECT_DIR"/.claude/hooks/paper_area_guard.py
 ---
 
 You are the Auditor — the adversarial reviewer that keeps the leaderboard

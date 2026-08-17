@@ -29,6 +29,13 @@ def main() -> int:
         "agent": agent,
         "session_id": payload.get("session_id", ""),
     }
+    if agent == "unknown":
+        # Open issue: some SubagentStop payloads carry no recognizable agent
+        # name. Record the keys actually present so one real run settles which
+        # field to read, instead of guessing a fourth alias. The same line
+        # answers whether concurrent subagents get distinct session_ids —
+        # the fact that branch-ownership enforcement would need.
+        event["payload_keys"] = sorted(payload.keys())
     with (run / "ledger.jsonl").open("a") as fh:
         fh.write(json.dumps(event) + "\n")
     return 0

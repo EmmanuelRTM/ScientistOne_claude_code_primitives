@@ -57,8 +57,11 @@ For each iteration `iN` in i1..iI:
    audit.md. Disqualify audit-FAIL branches. Write
    `iterations/iN/ranking.md`: table (branch, proposal one-liner, score,
    audit verdict, rank) + selection rationale.
-6. **Distill feedback** (you): follow the `distill-feedback` skill template →
-   `iterations/iN/distilled-feedback.md`. Ledger event `stage_iteration_iN`.
+6. **Distill feedback** (you): invoke the `distill-feedback` skill (Skill tool,
+   `skill: distill-feedback`) and write `iterations/iN/distilled-feedback.md`
+   with exactly its section template — do not improvise the format from
+   memory; the next ideator round consumes this file. Ledger event
+   `stage_iteration_iN`.
 
 After the last iteration: pick the best surviving (audit-PASS) branch across
 ALL iterations by official score. Copy its `solution.py`, `eval.json`,
@@ -71,7 +74,10 @@ If ZERO branches survive audits in all iterations, report and stop.
 
 1. Launch `paper-writer` with stage=conceive → `paper/research-representation.md`.
 2. Run `python3 .claude/scripts/ground_check.py RUN` — if exit 1, relaunch
-   paper-writer (stage=conceive, "fix the ground-report failures") once.
+   paper-writer (stage=conceive, "fix every non-SUPPORTED check in
+   paper/ground-report.json") once and re-run ground_check. If it still
+   fails, STOP and show the user the unsupported list — never compose a draft
+   on an ungrounded representation.
 3. Launch `paper-critic` → `paper/critic-report.md`.
 4. Launch `paper-writer` with stage=resolve-compose → `paper/draft.md`.
 Ledger event `stage_write_paper`.

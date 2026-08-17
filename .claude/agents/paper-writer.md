@@ -6,6 +6,7 @@ description: >
   against GROUND and CRITIC findings and composes the final draft. Invoked
   once per stage with stage=conceive or stage=resolve-compose.
 tools: Read, Write, Edit, Glob, Grep, Bash
+maxTurns: 40
 effort: high
 skills:
   - evidence-tagging

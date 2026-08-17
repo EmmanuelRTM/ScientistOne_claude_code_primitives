@@ -5,6 +5,7 @@ description: >
   toolchain is available. Optional post-processing after /verify-claims.
 argument-hint: "[--run <run-id>] [--keep-tags]"
 disable-model-invocation: true
+allowed-tools: Bash(which:*), Read, Write, Glob
 ---
 
 # /paper-to-latex — optional .tex / PDF rendering

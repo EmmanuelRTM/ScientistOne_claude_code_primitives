@@ -6,7 +6,10 @@ description: >
   contradictions, overclaims, missing comparisons, baseline fairness, honest
   limitations. Writes critic-report.md only.
 tools: Read, Glob, Grep, Write
+maxTurns: 30
 effort: high
+skills:
+  - evidence-tagging
 color: yellow
 ---
 

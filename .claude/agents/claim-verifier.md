@@ -9,6 +9,8 @@ tools: Read, Bash, Grep, Glob, Write
 disallowedTools: Edit
 maxTurns: 30
 effort: high
+skills:
+  - evidence-tagging
 color: pink
 hooks:
   Stop:

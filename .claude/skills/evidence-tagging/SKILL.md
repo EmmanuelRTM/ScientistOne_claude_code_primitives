@@ -1,8 +1,9 @@
 ---
 description: >
   Evidence-tag grammar and tagging discipline for paper artifacts. Preloaded
-  into paper-writing agents; defines how every factual claim is bound to a
-  workspace artifact (Chain-of-Evidence).
+  into every agent that writes, audits, verifies or repairs a paper artifact
+  (paper-writer, paper-critic, claim-verifier, refiner); defines how every
+  factual claim is bound to a workspace artifact (Chain-of-Evidence).
 user-invocable: false
 ---
 

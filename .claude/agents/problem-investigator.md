@@ -7,6 +7,7 @@ description: >
   at the start of a research run (/investigate or /research).
 tools: Read, Write, Glob, Grep, WebSearch, WebFetch, Bash
 memory: project
+maxTurns: 60
 effort: high
 skills:
   - citation-provenance

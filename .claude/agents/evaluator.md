@@ -6,13 +6,14 @@ description: >
   real numbers from real execution — never estimates.
 tools: Read, Bash, Write, Glob
 disallowedTools: Edit
+maxTurns: 20
 effort: medium
 skills:
   - evaluation-protocol
 color: green
 hooks:
   PreToolUse:
-    - matcher: "Write"
+    - matcher: "Write|Bash"
       hooks:
         - type: command
           command: python3 "$CLAUDE_PROJECT_DIR"/.claude/hooks/paper_area_guard.py

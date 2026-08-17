@@ -8,6 +8,8 @@ description: >
 tools: Read, Edit, Write, Glob, Grep, Bash
 maxTurns: 25
 effort: medium
+skills:
+  - evidence-tagging
 color: green
 ---
 

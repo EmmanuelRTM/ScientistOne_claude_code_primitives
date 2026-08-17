@@ -98,7 +98,9 @@ artifact:
 - `[EV:config:run-config.json#branches]` — run configuration value
 
 A citation key must exist in `bibliography.jsonl` BEFORE it is used — a
-PreToolUse hook blocks writes of unknown keys to paper files. Statements that
+PreToolUse hook blocks writes of unknown keys to paper files, whether the
+write arrives as Write, Edit, or a shell command (redirect, `tee`, `sed -i`,
+interpreter one-liner). Reading is never blocked. Statements that
 cannot be tagged go in an explicit `## Assumptions` section.
 
 ## Hard rules
@@ -127,6 +129,18 @@ cannot be tagged go in an explicit `## Assumptions` section.
 `paper-writer`, `paper-critic`, `claim-verifier`, `refiner` — see
 `.claude/agents/`. Subagents finish by replying with one line of JSON:
 `{"ok": true|false, "outputs": [paths], "notes": "..."}`.
+
+**Protocol-skill wiring** — a subagent never sees the orchestrator's context,
+so every protocol it is judged against is preloaded into it via `skills:`
+(these skills must therefore never set `disable-model-invocation`, which
+would block preloading):
+
+| skill | preloaded into | orchestrator use |
+|---|---|---|
+| `citation-provenance` | problem-investigator | — |
+| `evaluation-protocol` | ideator, solver, evaluator, auditor | Rank+Select reads eval.json/audit.md |
+| `evidence-tagging` | paper-writer, paper-critic, claim-verifier, refiner | — |
+| `distill-feedback` | — (main agent only) | invoked at step 6 of each iteration |
 
 **Parallel fan-out**: when a stage calls for B solver (or evaluator, or
 auditor) runs, launch ALL B subagent tasks in a SINGLE message so they run
