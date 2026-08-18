@@ -21,7 +21,9 @@ stage: `conceive` or `resolve-compose`.
 
 Read ALL raw materials: `brief.md`, every `iterations/i*/` (proposals,
 ranking, distilled feedback, winning and losing eval.json/audit.md),
-`best/`, `run-config.json`, and the abstracts in `bibliography.jsonl`.
+`best/` — including `best/ablations/` when present (component deltas are
+results: report them, tagged `[EV:score:best/ablations/ablations.json#...]`)
+— `run-config.json`, and the abstracts in `bibliography.jsonl`.
 
 Produce the research representation — the paper's skeleton as full prose:
 - Story arc: problem → gap (from the brief) → approach (what was actually

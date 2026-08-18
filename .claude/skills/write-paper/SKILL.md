@@ -28,7 +28,13 @@ and `best/eval.json` must exist — otherwise stop and point to `/discover`.
    `paper/critic-report.md`.
 4. **RESOLVE + COMPOSE**: launch `paper-writer` (stage=resolve-compose,
    run dir). Expect `paper/draft.md` with all tags intact.
-5. Ledger: `python3 .claude/scripts/ledger.py append '{"event":"stage_write_paper","detail":"draft complete, ratio=<r>"}'`
+5. **Convergence round** (the paper's Ground→Critic→Resolve loop, max 2
+   rounds, terminating on convergence — zero blockers — or plateau): if
+   step 3's report contained any BLOCKER, relaunch `paper-critic` against
+   `paper/draft.md`. If BLOCKERs remain, relaunch `paper-writer`
+   (stage=resolve-compose) once more with them; then stop regardless and
+   report residual issues honestly.
+6. Ledger: `python3 .claude/scripts/ledger.py append '{"event":"stage_write_paper","detail":"draft complete, ratio=<r>"}'`
 
 Report: grounding ratio, critic issue count (blockers), draft section list.
 Next stage: `/verify-claims`.

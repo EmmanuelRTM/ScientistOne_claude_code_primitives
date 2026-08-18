@@ -42,8 +42,9 @@ topic, offline flag; ask for `brief.md` + `bibliography.jsonl` +
 For each iteration `iN` in i1..iI:
 
 1. **Ideate**: launch `ideator` (run dir, iteration, B; from i2 also point it
-   at all previous distilled-feedback.md files). Expect
-   `iterations/iN/ideas.md` + `proposals/p1..pB.md`.
+   at all previous distilled-feedback.md files — the ideator then applies
+   top-K retention: p1..pK refine the previous iteration's top-K surviving
+   branches). Expect `iterations/iN/ideas.md` + `proposals/p1..pB.md`.
    Ledger event `stage_ideate`.
 2. **Solve — PARALLEL**: launch ALL B `solver` subagents IN ONE SINGLE
    MESSAGE (one Agent call per branch). Each task message: run dir, its own
@@ -70,6 +71,10 @@ ALL iterations by official score. Copy its `solution.py`, `eval.json`,
 Ledger event `stage_discover` complete.
 If ZERO branches survive audits in all iterations, report and stop.
 
+Then launch `ablation-analyst` (run dir) → `best/ablations/{ablations.json,
+ablation.md}`; ledger event `stage_ablation`. Ablations are secondary
+evidence — on `ok: false`, record and continue; never block the pipeline.
+
 ## 3. Write paper
 
 1. Launch `paper-writer` with stage=conceive → `paper/research-representation.md`.
@@ -80,6 +85,11 @@ If ZERO branches survive audits in all iterations, report and stop.
    on an ungrounded representation.
 3. Launch `paper-critic` → `paper/critic-report.md`.
 4. Launch `paper-writer` with stage=resolve-compose → `paper/draft.md`.
+5. Convergence round (Ground→Critic→Resolve, max 2 rounds total): if the
+   critic report contained any BLOCKER, relaunch `paper-critic` against
+   `paper/draft.md`. If BLOCKERs remain, relaunch `paper-writer`
+   (stage=resolve-compose) once more with them, then stop regardless
+   (plateau) and report residual issues honestly.
 Ledger event `stage_write_paper`.
 
 ## 4. Verify claims

@@ -41,6 +41,14 @@ Your task message names the run directory. Protocol:
      claimed, or abstract-only source) / FAIL (not supported).
    - **Methodological claims**: check against `best/solution.py` and
      `best/solve.log`. Does the code/log actually do what the sentence says?
+   - **Conclusion claims** (comparatives — "outperforms", "best", "improves
+     by"): the individual numbers were already checked deterministically;
+     you judge whether the COMPARISON follows from the cited artifacts. Open
+     every artifact the tags name, restate the values in `detail`, and
+     verify the direction and magnitude claimed (e.g. "A outperforms B"
+     requires A's score actually beating B's). No quote field needed — the
+     evidence is numeric — but a detail that does not name the compared
+     numbers does not count.
 
    **Quote-ground every PASS/PARTIAL**: first extract the word-for-word
    passage that supports the claim, then judge. Record it in a `"quote"`

@@ -130,6 +130,9 @@ def needs_quote(claim: dict) -> bool:
     Applies to LLM-judged PASS/PARTIAL verdicts on citation and
     methodological claims — the two claim types whose support lives in prose
     or code rather than in a number a script can compare directly.
+    Conclusion claims are exempt: their evidence is numeric (already checked
+    deterministically per tag); the LLM judges only the derivation, and its
+    detail must name the compared values instead of quoting prose.
     """
     return (claim.get("type") in ("citation", "methodological")
             and claim.get("status") in ("PASS", "PARTIAL")

@@ -2,7 +2,9 @@
 """Extract Claims: parse the paper draft into paper/claims.jsonl.
 
 A claim is a sentence that carries >=1 evidence tag OR states a factual
-number/citation. Claim type is inferred from its tags:
+number/citation. Claim type is inferred from its tags (per the CoE claim
+taxonomy: citation, numerical, methodological, conclusion):
+  comparative sentence with score/log tags -> conclusion
   score/log tags        -> numerical
   cite tags             -> citation
   artifact/config tags, or Method-section sentence -> methodological
@@ -11,6 +13,7 @@ Usage: python3 .claude/scripts/extract_claims.py <run-dir-or-run-id> [--file pap
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -20,8 +23,18 @@ from evtags import SENTENCE_SPLIT_RE, find_tags, numbers_in
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def infer_type(tags, section: str) -> str:
+CONCLUSION_RE = re.compile(
+    r"\b(outperform\w*|exceed\w*|improv\w*|surpass\w*|beats?|"
+    r"better than|worse than|best|highest|lowest|compared (?:to|with|against)|"
+    r"versus|vs\.)\b", re.IGNORECASE)
+
+
+def infer_type(tags, section: str, text: str = "") -> str:
     types = {t for t, _ in tags}
+    # match on prose only — tag paths like best/eval.json must not trigger
+    prose = re.sub(r"\[EV:[^\]]*\]", "", text)
+    if ("score" in types or "log" in types) and CONCLUSION_RE.search(prose):
+        return "conclusion"
     if "score" in types or "log" in types:
         return "numerical"
     if "cite" in types:
@@ -73,7 +86,7 @@ def main() -> int:
             counter += 1
             claims.append({
                 "id": f"C{counter:03d}",
-                "type": infer_type(tags, section),
+                "type": infer_type(tags, section, sentence),
                 "text": sentence,
                 "evidence_tags": [f"EV:{t}:{r}" for t, r in tags],
                 "section": section,
