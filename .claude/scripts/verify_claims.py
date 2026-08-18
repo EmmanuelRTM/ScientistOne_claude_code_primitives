@@ -77,6 +77,11 @@ def verify_claim(run_dir: Path, bib: dict, claim: dict) -> None:
 
     if claim["type"] == "methodological" and not failed:
         needs_llm = True
+    # conclusion claims (CoE taxonomy: "outperforms X by Y") pass their
+    # per-tag numeric checks above, but whether the comparison actually
+    # FOLLOWS from those numbers is a derivation judgment -> LLM
+    if claim["type"] == "conclusion" and not failed:
+        needs_llm = True
 
     claim["status"] = "FAIL" if failed else ("PENDING_LLM" if needs_llm else "PASS")
     claim["detail"] = "; ".join(details)

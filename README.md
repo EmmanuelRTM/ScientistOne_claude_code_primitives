@@ -21,6 +21,7 @@ ICML 2026) where Claude Code itself is the runtime:
 Task + Seeds → [Problem Investigator] → Research Brief
             → [Ideator → B parallel branches × (Solve → Evaluate → Audit)
                → Rank+Select → distilled feedback] × I iterations
+            → [Ablation: component deltas on the selected winner]
             → [Paper Writer: CONCEIVE → GROUND → CRITIC → RESOLVE → COMPOSE]
             → [Claim Verifier: Extract → Verify → Refine]
             → final/paper.md  (+ Chain-of-Evidence audit)
@@ -171,7 +172,7 @@ Then: `/research "<topic>" --task <name>`.
 
 ```
 CLAUDE.md                  # pipeline constitution (loaded by every agent)
-.claude/agents/            # 9 researcher subagents
+.claude/agents/            # 10 researcher subagents
 .claude/skills/            # 7 stage commands + 4 internal protocol skills
 .claude/rules/             # workspace protocol (always on) + 3 path-scoped rules
                            #   (evidence tags, bibliography, branch discipline)

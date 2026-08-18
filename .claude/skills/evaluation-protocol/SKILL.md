@@ -1,9 +1,9 @@
 ---
 description: >
   Official scoring and audit protocol for Parallel Explore-Exploit branches.
-  Preloaded into the ideator, solver, evaluator, and auditor agents; defines
-  eval.json, the audit checklist, and what counts as a specification
-  violation.
+  Preloaded into the ideator, solver, evaluator, auditor, and
+  ablation-analyst agents; defines eval.json, the audit checklist, and what
+  counts as a specification violation.
 user-invocable: false
 ---
 

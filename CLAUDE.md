@@ -11,7 +11,7 @@ the integrity guards, and the filesystem is the message bus.
 Task + Seeds → [Problem Investigator] → brief.md
             → [Discovery: Ideator → B parallel branches × (Solve → Evaluate → Audit)
                → Rank+Select → distilled feedback → next iteration] × I
-            → best solution + logs
+            → best solution + logs → [Ablation] → best/ablations/
             → [Paper Writer: CONCEIVE → GROUND(script) → CRITIC → RESOLVE+COMPOSE] → draft.md
             → [Claim Verifier: extract(script) → verify → Refiner] → final/paper.md
             → chain_of_evidence.py audit
@@ -36,6 +36,7 @@ holds the current run id. Layout:
 | `iterations/iN/branches/bK/audit.md` | auditor |
 | `iterations/iN/{ranking.md,distilled-feedback.md}` | main agent |
 | `best/` (SELECTED.json + copies of winner) | main agent |
+| `best/ablations/` (ablations.json, ablation.md, variants) | ablation-analyst |
 | `paper/research-representation.md` | paper-writer (conceive) |
 | `paper/ground-report.json` | ground_check.py |
 | `paper/critic-report.md` | paper-critic |
@@ -126,8 +127,8 @@ cannot be tagged go in an explicit `## Assumptions` section.
 ## Agent roster
 
 `problem-investigator`, `ideator`, `solver`, `evaluator`, `auditor`,
-`paper-writer`, `paper-critic`, `claim-verifier`, `refiner` — see
-`.claude/agents/`. Subagents finish by replying with one line of JSON:
+`ablation-analyst`, `paper-writer`, `paper-critic`, `claim-verifier`,
+`refiner` — see `.claude/agents/`. Subagents finish by replying with one line of JSON:
 `{"ok": true|false, "outputs": [paths], "notes": "..."}`.
 
 **Protocol-skill wiring** — a subagent never sees the orchestrator's context,
@@ -138,7 +139,7 @@ would block preloading):
 | skill | preloaded into | orchestrator use |
 |---|---|---|
 | `citation-provenance` | problem-investigator | — |
-| `evaluation-protocol` | ideator, solver, evaluator, auditor | Rank+Select reads eval.json/audit.md |
+| `evaluation-protocol` | ideator, solver, evaluator, auditor, ablation-analyst | Rank+Select reads eval.json/audit.md |
 | `evidence-tagging` | paper-writer, paper-critic, claim-verifier, refiner | — |
 | `distill-feedback` | — (main agent only) | invoked at step 6 of each iteration |
 
@@ -158,7 +159,7 @@ deliberately narrow:
 | `run_stop_gate.py` | settings `Stop` + `PreToolUse:AskUserQuestion` | main session — the autopilot loop |
 | `ledger_log.py` | settings `SubagentStart`/`SubagentStop` | all 9 agents |
 | `citation_guard.py` | settings `PreToolUse:Write\|Edit\|Bash` | every agent that writes |
-| `paper_area_guard.py` | frontmatter | ideator, solver, evaluator, auditor |
+| `paper_area_guard.py` | frontmatter | ideator, solver, evaluator, auditor, ablation-analyst |
 | `verifier_stop_gate.py` | frontmatter `Stop` (registers as SubagentStop) | claim-verifier |
 
 `paper_area_guard` is intentionally NOT on paper-writer, paper-critic,

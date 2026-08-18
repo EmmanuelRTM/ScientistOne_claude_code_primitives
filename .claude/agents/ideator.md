@@ -29,6 +29,13 @@ branch count). Inputs: `brief.md`, `task/task.md`, and — from iteration 2 on �
 every previous `iterations/i*/distilled-feedback.md` (exploit what worked,
 avoid what failed).
 
+**Top-K retention (from iteration 2 on)**: PEE retains the winning lines.
+Let K = min(2, B−1). Proposals `p1..pK` must be direct refinements of the
+previous iteration's top-K audit-PASS branches (ranked in the distilled
+feedback's scoreboard) — same core approach, one named knob pushed further.
+The remaining B−K slots are fresh ideation; the diversity requirement below
+applies to those fresh slots.
+
 Produce `iterations/iN/ideas.md`:
 - ≥ 8 candidates on two tracks: ≥ 4 **Conservative** (each anchored to at
   least one `[EV:cite:<key>]` from the brief's bibliography) and ≥ 4
