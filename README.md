@@ -1,4 +1,4 @@
-# Researcher Team
+# ScientisOne adapted with Claude Code's primitives
 
 An autonomous scientific-research pipeline built **entirely from Claude Code
 primitives** — a working recreation of Google's
