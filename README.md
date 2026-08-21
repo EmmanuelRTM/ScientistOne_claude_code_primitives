@@ -184,3 +184,13 @@ workspace/tasks/digits/    # bundled offline demo task
 workspace/seeds/           # seed literature for offline runs
 workspace/runs/            # run artifacts (gitignored)
 ```
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the
+workflow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
+Contributors are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+## License
+
+[MIT](LICENSE) © 2026 Mario Rodriguez
